@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"runtime/pprof"
 	"strings"
 	"time"
 
@@ -22,19 +23,21 @@ func NewRunner(logger *slog.Logger, year string, days []DayImplementation) AOCRu
 }
 
 const DAY_SEPARATOR = "-----------------------"
-const USAGE_TEXT = "Usage: %s [-d <day number> | --day <day number>] [-a | --allDays] [-s | --skipTests]\n  -d, --day        Run a specific day\n  -a, --allDays    Run all days sequentially\n  -s, --skipTests  Execute only the real inputs, not the examples\nThe -a and -d arguments are mutually exclusive.\nThe default behaviour if run with no arguments is to attempt to execute the present day.\n"
+const USAGE_TEXT = "Usage: %s [-d <day number> | --day <day number>] [-a | --allDays] [-s | --skipTests] [-p | --profiling]\n  -d, --day        Run a specific day\n  -a, --allDays    Run all days sequentially\n  -s, --skipTests  Execute only the real inputs, not the examples\n  -p, --profiling  Run with profiling enabled (output to profile.prof)\nThe -a and -d arguments are mutually exclusive.\nThe default behaviour if run with no arguments is to attempt to execute the present day.\n"
 
 func printUsage() {
 	fmt.Printf(USAGE_TEXT, os.Args[0])
 }
 
 func (runner AOCRunner) Run() {
-	var allDays, skipTests bool
+	var allDays, skipTests, profile bool
 	var specificDay int
 	flag.BoolVar(&skipTests, "s", false, "Skip tests")
 	flag.BoolVar(&skipTests, "skipTests", false, "Skip tests")
 	flag.BoolVar(&allDays, "a", false, "Run all days")
 	flag.BoolVar(&allDays, "allDays", false, "Run all days")
+	flag.BoolVar(&profile, "p", false, "Run with profiling enabled")
+	flag.BoolVar(&profile, "profiling", false, "Run with profiling enabled")
 	flag.IntVar(&specificDay, "d", 0, "Specify a day number to run")
 	flag.IntVar(&specificDay, "day", 0, "Specify a day number to run")
 	flag.Usage = printUsage
@@ -44,6 +47,12 @@ func (runner AOCRunner) Run() {
 		fmt.Println("The -a and -d arguments are mutually exclusive. Specify one or the other.")
 		printUsage()
 		os.Exit(1)
+	}
+
+	if profile {
+		f, _ := os.Create("profile.prof")
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
 	}
 
 	if allDays {
