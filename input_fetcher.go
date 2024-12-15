@@ -21,7 +21,19 @@ func fetchInput(env *AOCEnvironment, logger *slog.Logger, day int) string {
 			res, err := env.httpClient.Get(url)
 			assertOK(err)
 
-			// TODO check response code
+			if res.StatusCode != 200 {
+				bodyString := "none"
+				bodyData, err := io.ReadAll(res.Body)
+				if err == nil {
+					bodyString = string(bodyData)
+				}
+				logger.Error(
+					"Failed to fetch input data",
+					slog.Int("statusCode", res.StatusCode),
+					slog.String("statusText", res.Status),
+					slog.String("body", bodyString))
+				os.Exit(1)
+			}
 
 			inputData, err = io.ReadAll(res.Body)
 			assertOK(err)
