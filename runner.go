@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"runtime/pprof"
+	"strconv"
 	"strings"
 	"time"
 
@@ -106,10 +107,18 @@ func (runner AOCRunner) Run() {
 }
 
 func (runner AOCRunner) runDay(dayNumber int, skipTests bool) time.Duration {
-	day := runner.days[dayNumber-1]
-
 	fmt.Println(DAY_SEPARATOR)
 	fmt.Printf("Day %d\n", dayNumber)
+
+	nowYear, nowMonth, nowDay := time.Now().Date()
+	day := runner.days[dayNumber-1]
+	year, _ := strconv.Atoi(runner.env.year)
+	if nowYear == year && nowMonth == 12 && nowDay < day.DayNumber {
+		runner.env.logger.Info("Skipping day - not ready yet")
+		fmt.Printf("Skipping - day not published yet\n")
+		return 0
+	}
+
 	if day.ExampleInput != "" && !skipTests {
 		fmt.Print("--Example input--\nPart 1: ")
 		res := day.testDay(runner.env)
