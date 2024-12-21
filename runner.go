@@ -25,17 +25,19 @@ func NewRunner(logger *slog.Logger, year string, days []DayImplementation) AOCRu
 }
 
 const DAY_SEPARATOR = "-----------------------"
-const USAGE_TEXT = "Usage: %s [-d <day number> | --day <day number>] [-a | --allDays] [-k | --skipTests] [-p | --profiling] [-s <num runs> | --stats <num runs>]\n  -d, --day        Run a specific day\n  -a, --allDays    Run all days sequentially\n  -s, --skipTests  Execute only the real inputs, not the examples\n  -p, --profiling  Run with profiling enabled (output to profile.prof)\n  -s, --stats      Perform multiple runs and calculate statistics\nThe -a and -d arguments are mutually exclusive.\nThe default behaviour if run with no arguments is to attempt to execute the present day.\n"
+const USAGE_TEXT = "Usage: %s [-d <day number> | --day <day number>] [-a | --allDays] [-k | --skipTests] [-t | --testsOnly] [-p | --profiling] [-s <num runs> | --stats <num runs>]\n  -d, --day        Run a specific day (mutually exclusive with -a)\n  -a, --allDays    Run all days sequentially (mutually exclusive with -d)\n  -k, --skipTests  Execute only the real inputs, not the examples (mutually exclusive with -t)\n  -t, --testsOnly  Execute only the examples, not the real inputs (mutually exclusive with -k)\n  -p, --profiling  Run with profiling enabled (output to profile.prof)\n  -s, --stats      Perform multiple runs and calculate statistics\nThe default behaviour if run with neither -a nor -d is to attempt to execute the present day.\n"
 
 func printUsage() {
 	fmt.Printf(USAGE_TEXT, os.Args[0])
 }
 
 func (runner AOCRunner) Run() {
-	var allDays, skipTests, profile bool
+	var allDays, skipTests, testsOnly, profile bool
 	var specificDay, numRuns int
 	flag.BoolVar(&skipTests, "k", false, "Skip tests")
 	flag.BoolVar(&skipTests, "skipTests", false, "Skip tests")
+	flag.BoolVar(&testsOnly, "t", false, "Only run tests")
+	flag.BoolVar(&testsOnly, "testsOnly", false, "Only run tests")
 	flag.BoolVar(&allDays, "a", false, "Run all days")
 	flag.BoolVar(&allDays, "allDays", false, "Run all days")
 	flag.BoolVar(&profile, "p", false, "Run with profiling enabled")
@@ -46,6 +48,12 @@ func (runner AOCRunner) Run() {
 	flag.IntVar(&numRuns, "stats", 0, "Calculate statistics over multiple runs")
 	flag.Usage = printUsage
 	flag.Parse()
+
+	if skipTests && testsOnly {
+		fmt.Println("The -k and -t arguments are mutually exclusive. Specify one or the other.")
+		printUsage()
+		os.Exit(1)
+	}
 
 	if allDays && specificDay > 0 {
 		fmt.Println("The -a and -d arguments are mutually exclusive. Specify one or the other.")
@@ -65,7 +73,7 @@ func (runner AOCRunner) Run() {
 		var maxTime time.Duration
 		var axisBuilder, labelBuilder1, labelBuilder2 strings.Builder
 		for ix := range runner.days {
-			result := runner.runDay(ix+1, numRuns, skipTests)
+			result := runner.runDay(ix+1, numRuns, skipTests, testsOnly)
 			times[ix] = result.median
 			totals.min += result.min
 			totals.max += result.max
@@ -86,34 +94,36 @@ func (runner AOCRunner) Run() {
 			}
 		}
 		println(DAY_SEPARATOR)
-		if numRuns < 2 {
-			fmt.Printf("Total time: %s\n\n", totals.median)
-		} else {
-			fmt.Printf("Total time: %s median, %s mean, %s min, %s max\n\n", totals.median, totals.mean, totals.min, totals.max)
-		}
-
-		for threshold := 1.0; threshold > 0.01; threshold -= 0.1 {
-			fmt.Print("| ")
-			for _, time := range times {
-				if float64(time)/float64(maxTime) >= threshold {
-					fmt.Print("#")
-				} else {
-					fmt.Print(" ")
-				}
+		if !testsOnly {
+			if numRuns < 2 {
+				fmt.Printf("Total time: %s\n\n", totals.median)
+			} else {
+				fmt.Printf("Total time: %s median, %s mean, %s min, %s max\n\n", totals.median, totals.mean, totals.min, totals.max)
 			}
-			fmt.Println()
+
+			for threshold := 1.0; threshold > 0.01; threshold -= 0.1 {
+				fmt.Print("| ")
+				for _, time := range times {
+					if float64(time)/float64(maxTime) >= threshold {
+						fmt.Print("#")
+					} else {
+						fmt.Print(" ")
+					}
+				}
+				fmt.Println()
+			}
+			fmt.Print("|-")
+			fmt.Println(axisBuilder.String())
+			fmt.Print("  ")
+			fmt.Println(labelBuilder1.String())
+			fmt.Print("  ")
+			fmt.Println(labelBuilder2.String())
 		}
-		fmt.Print("|-")
-		fmt.Println(axisBuilder.String())
-		fmt.Print("  ")
-		fmt.Println(labelBuilder1.String())
-		fmt.Print("  ")
-		fmt.Println(labelBuilder2.String())
 	} else {
 		if specificDay == 0 {
 			_, _, specificDay = time.Now().Date()
 		}
-		runner.runDay(specificDay, numRuns, skipTests)
+		runner.runDay(specificDay, numRuns, skipTests, testsOnly)
 	}
 }
 
@@ -124,7 +134,7 @@ type runStats struct {
 	mean   time.Duration
 }
 
-func (runner AOCRunner) runDay(dayNumber int, numRuns int, skipTests bool) runStats {
+func (runner AOCRunner) runDay(dayNumber int, numRuns int, skipTests bool, testsOnly bool) runStats {
 	fmt.Println(DAY_SEPARATOR)
 	fmt.Printf("Day %d\n", dayNumber)
 
@@ -157,8 +167,12 @@ func (runner AOCRunner) runDay(dayNumber int, numRuns int, skipTests bool) runSt
 			fmt.Println("Expected: ", day.ExamplePart2Answer)
 			fmt.Println("Received: ", res.result.part2Result)
 		}
-		fmt.Println("--Real input--")
 	}
+	if testsOnly {
+		return runStats{}
+	}
+
+	fmt.Println("--Real input--")
 	if numRuns < 2 {
 		res := day.executeDay(runner.env)
 		fmt.Printf("Part 1: %s (%s)\nPart 2: %s (%s)\n", res.part1Result, res.part1Time, res.part2Result, res.part2Time)
