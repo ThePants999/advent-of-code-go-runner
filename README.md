@@ -7,8 +7,42 @@ To use it:
 `go get github.com/ThePants999/advent-of-code-go-runner`
 
 * Write each day's solution as a pair of functions (part 1 and part 2). Your part 1 function should take an `*slog.Logger` and a string, which is your input, and should return a string (your answer) and any one other parameter, which is some contextual information that will be passed to your part 2 function (e.g. something you calculated in part 1 that will be of use in part 2). Your part 2 function should take the same parameters as part 1 plus your contextual information, and return just your answer as a string.
+
+```go
+func Day1Part1(logger *slog.Logger, input string) (string, any) {
+	lines := strings.Fields(input)
+	ints := make([]int, len(lines))
+	for ix, line := range lines {
+		ints[ix], _ = strconv.Atoi(line)
+	}
+	// Do some cunning solving
+	result := ints[0] + ints[1]
+	return strconv.Itoa(result), ints
+}
+
+func Day1Part2(logger *slog.Logger, input string, part1Context any) string {
+	ints := part1Context.(int[])
+	// Even more cunning solving
+	result := ints[0] * int[1]
+	return strconv.Itoa(result)
+}
+```
+
 * Also create a `runner.DayImplementation` for each day that references the part 1 and part 2 functions above. Optionally, it can also encode the example input and part 1/2 answers for that input, as provided on the Advent of Code website, in which case your solution will be tested using that input as well as executed over your real input.
   * It's recommended to put each day in its own file, and you can use [_template.go](_template.go) as a starting point.
+
+```go
+var Day1 = runner.DayImplementation{
+	DayNumber:          1,
+	ExecutePart1:       Day1Part1,
+	ExecutePart2:       Day1Part2,
+	ExampleInput:       `2
+4`,
+	ExamplePart1Answer: "6",
+	ExamplePart2Answer: "8",
+}
+```
+
 * Write a `main()` function for your application, which should just call `runner.NewRunner()` - providing a slice of all your `runner.DayImplementation`s - and then call `Run()` on it. Optionally, you can also set up your own `slog.Logger` that controls how logging will work; this logger will be passed to all of your solution functions, as well as used by the framework. But don't worry, you can just pass `nil` if you don't care. An example of what this might look like:
 
 ```go
