@@ -176,7 +176,7 @@ func (runner AOCRunner) runDay(dayNumber int, numRuns int, skipTests bool, tests
 	if numRuns < 2 {
 		res := day.executeDay(runner.env)
 		total := res.part1Time + res.part2Time
-		fmt.Printf("Part 1: %s (%s)\nPart 2: %s (%s)\nTotal time: %s\n", res.part1Result, res.part1Time, res.part2Result, res.part2Time, total)
+		fmt.Printf("Part 1: %s (%s)\nPart 2: %s (%s)\nTotal time: %s\n", aurora.Bold(res.part1Result), res.part1Time, aurora.Bold(res.part2Result), res.part2Time, total)
 		return runStats{total, total, total, total}
 	} else {
 		var p1Aggregate, p2Aggregate runStats
@@ -217,7 +217,7 @@ func (runner AOCRunner) runDay(dayNumber int, numRuns int, skipTests bool, tests
 			p2Aggregate.median /= 2
 		}
 		totals := runStats{p1Aggregate.min + p2Aggregate.min, p1Aggregate.max + p2Aggregate.max, p1Aggregate.median + p2Aggregate.median, p1Aggregate.mean + p2Aggregate.mean}
-		fmt.Printf("Part 1: %s (median %s, mean %s, min %s, max %s)\nPart 2: %s (median %s, mean %s, min %s, max %s)\nTotal time: median %s, mean %s, min %s, max %s\n", results[0].part1Result, p1Aggregate.median, p1Aggregate.mean, p1Aggregate.min, p1Aggregate.max, results[0].part2Result, p2Aggregate.median, p2Aggregate.mean, p2Aggregate.min, p2Aggregate.max, totals.median, totals.mean, totals.min, totals.max)
+		fmt.Printf("Part 1: %s (median %s, mean %s, min %s, max %s)\nPart 2: %s (median %s, mean %s, min %s, max %s)\nTotal time: median %s, mean %s, min %s, max %s\n", aurora.Bold(results[0].part1Result), p1Aggregate.median, p1Aggregate.mean, p1Aggregate.min, p1Aggregate.max, aurora.Bold(results[0].part2Result), p2Aggregate.median, p2Aggregate.mean, p2Aggregate.min, p2Aggregate.max, totals.median, totals.mean, totals.min, totals.max)
 		return totals
 	}
 }
