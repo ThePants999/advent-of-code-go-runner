@@ -4,7 +4,7 @@ This project provides a simple framework library that makes it easy for you to t
 To use it:
 * Fetch this module:
 
-`go get github.com/ThePants999/advent-of-code-dotnet-runner`
+`go get github.com/ThePants999/advent-of-code-go-runner`
 
 * Write each day's solution as a pair of functions (part 1 and part 2). Your part 1 function should take an `*slog.Logger` and a string, which is your input, and should return a string (your answer) and any one other parameter, which is some contextual information that will be passed to your part 2 function (e.g. something you calculated in part 1 that will be of use in part 2). Your part 2 function should take the same parameters as part 1 plus your contextual information, and return just your answer as a string.
 * Also create a `runner.DayImplementation` for each day that references the part 1 and part 2 functions above. Optionally, it can also encode the example input and part 1/2 answers for that input, as provided on the Advent of Code website, in which case your solution will be tested using that input as well as executed over your real input.
